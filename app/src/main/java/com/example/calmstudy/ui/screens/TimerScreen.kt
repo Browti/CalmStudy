@@ -21,19 +21,27 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import com.example.calmstudy.R
 
+data class TimeOption(
+    val hours: Float,
+    val label: String,
+    val hasMusic: Boolean = false
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TimerScreen(navController: NavController) {
     val context = LocalContext.current
     var mediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
+    var backgroundMediaPlayer: MediaPlayer? by remember { mutableStateOf(null) }
     var isTimerRunning by remember { mutableStateOf(false) }
     var selectedDuration by remember { mutableStateOf<Long?>(null) }
     var remainingTime by remember { mutableStateOf<Long?>(null) }
+    var currentOption by remember { mutableStateOf<TimeOption?>(null) }
     
     val timeOptions = listOf(
-        TimeOption(1f/60f, "1 хвилина"),
-        TimeOption(0.5f, "30 хвилин"),
-        TimeOption(1f, "1 година"),
+        TimeOption(1f/60f, "1 хвилина\n(з музикою)", hasMusic = true),
+        TimeOption(0.5f, "30 хвилин\n(з музикою)", hasMusic = true),
+        TimeOption(1f, "1 година\n(з музикою)", hasMusic = true),
         TimeOption(3f, "3 години"),
         TimeOption(6f, "6 годин"),
         TimeOption(8f, "8 годин")
@@ -42,22 +50,49 @@ fun TimerScreen(navController: NavController) {
     DisposableEffect(Unit) {
         onDispose {
             mediaPlayer?.release()
+            backgroundMediaPlayer?.release()
         }
     }
 
     LaunchedEffect(isTimerRunning, selectedDuration) {
         if (isTimerRunning && selectedDuration != null) {
             remainingTime = selectedDuration
+            
+            // Запускаємо фонову музику, якщо потрібно
+            if (currentOption?.hasMusic == true) {
+                backgroundMediaPlayer?.release()
+                backgroundMediaPlayer = MediaPlayer.create(context, R.raw.meditation_music)
+                backgroundMediaPlayer?.isLooping = true
+                backgroundMediaPlayer?.setOnCompletionListener { mp ->
+                    mp.seekTo(0)
+                    mp.start()
+                }
+                backgroundMediaPlayer?.start()
+            }
+            
             while (remainingTime!! > 0) {
                 delay(1000)
                 remainingTime = remainingTime!! - 1
+                
+                if (currentOption?.hasMusic == true && backgroundMediaPlayer?.isPlaying == false) {
+                    backgroundMediaPlayer?.seekTo(0)
+                    backgroundMediaPlayer?.start()
+                }
             }
-            // Відтворюємо звук при закінченні таймера
+            
+            // Зупиняємо фонову музику
+            backgroundMediaPlayer?.stop()
+            backgroundMediaPlayer?.release()
+            backgroundMediaPlayer = null
+            
+            // Відтворюємо звук завершення
             mediaPlayer?.release()
             mediaPlayer = MediaPlayer.create(context, R.raw.timer_end)
             mediaPlayer?.start()
+            
             isTimerRunning = false
             selectedDuration = null
+            currentOption = null
         }
     }
 
@@ -84,16 +119,18 @@ fun TimerScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (isTimerRunning && remainingTime != null) {
-                // Показуємо таймер
                 TimerDisplay(
                     remainingTime = remainingTime!!,
                     onCancel = {
                         isTimerRunning = false
                         selectedDuration = null
+                        currentOption = null
+                        backgroundMediaPlayer?.stop()
+                        backgroundMediaPlayer?.release()
+                        backgroundMediaPlayer = null
                     }
                 )
             } else {
-                // Показуємо опції вибору часу
                 Text(
                     text = "Виберіть тривалість",
                     style = MaterialTheme.typography.headlineSmall,
@@ -110,6 +147,7 @@ fun TimerScreen(navController: NavController) {
                             option = option,
                             onClick = {
                                 selectedDuration = (option.hours * 3600).toLong()
+                                currentOption = option
                                 isTimerRunning = true
                             }
                         )
@@ -163,7 +201,9 @@ private fun TimeOptionCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+            containerColor = if (option.hasMusic) 
+                MaterialTheme.colorScheme.primaryContainer 
+            else MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
         Column(
@@ -171,7 +211,7 @@ private fun TimeOptionCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = Icons.Default.Timer,
+                imageVector = if (option.hasMusic) Icons.Default.MusicNote else Icons.Default.Timer,
                 contentDescription = null,
                 modifier = Modifier.size(32.dp)
             )
@@ -192,9 +232,4 @@ private fun formatTime(seconds: Long): String {
         TimeUnit.SECONDS.toMinutes(seconds) % 60,
         seconds % 60
     )
-}
-
-data class TimeOption(
-    val hours: Float,
-    val label: String
-) 
+} 
