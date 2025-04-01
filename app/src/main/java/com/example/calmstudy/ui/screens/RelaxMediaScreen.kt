@@ -23,7 +23,11 @@ import com.example.calmstudy.R
 fun RelaxMediaScreen(navController: NavController) {
     var currentlyPlayingIndex by remember { mutableStateOf<Int?>(null) }
     var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    var showOnlyFavorites by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    
+    // Зберігаємо стан улюблених звуків
+    var favoriteAudios by remember { mutableStateOf(setOf<Int>()) }
 
     Column(
         modifier = Modifier
@@ -31,86 +35,131 @@ fun RelaxMediaScreen(navController: NavController) {
             .padding(16.dp)
     ) {
         // Кнопка повернення на головну
-        Button(
-            onClick = {
-                mediaPlayer?.stop()
-                mediaPlayer?.release()
-                navController.navigate("home")
-            },
-            modifier = Modifier.padding(bottom = 16.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "На головну"
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("На головну")
+            Button(
+                onClick = {
+                    mediaPlayer?.stop()
+                    mediaPlayer?.release()
+                    navController.navigate("home")
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "На головну"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("На головну")
+            }
+            
+            // Перемикач для показу улюблених
+            IconToggleButton(
+                checked = showOnlyFavorites,
+                onCheckedChange = { showOnlyFavorites = it }
+            ) {
+                Icon(
+                    imageVector = if (showOnlyFavorites) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = if (showOnlyFavorites) "Показати всі" else "Показати улюблені",
+                    tint = if (showOnlyFavorites) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
 
         // Заголовок
         Text(
-            text = "Релаксаційні аудіо",
+            text = if (showOnlyFavorites) "Улюблені аудіо" else "Релаксаційні аудіо",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        // Сітка аудіо
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            items(relaxAudios) { audio ->
-                AudioCard(
-                    audio = audio,
-                    isPlaying = currentlyPlayingIndex == audio.id,
-                    onClick = {
-                        if (currentlyPlayingIndex == audio.id) {
-                            // Зупиняємо поточне аудіо
-                            try {
+        // Фільтруємо аудіо в залежності від вибраного режиму
+        val displayedAudios = if (showOnlyFavorites) {
+            relaxAudios.filter { it.id in favoriteAudios }
+        } else {
+            relaxAudios
+        }
+
+        if (displayedAudios.isEmpty() && showOnlyFavorites) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "У вас ще немає улюблених аудіо.\nДодайте їх, натиснувши на сердечко.",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        } else {
+            // Сітка аудіо
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(displayedAudios) { audio ->
+                    AudioCard(
+                        audio = audio,
+                        isPlaying = currentlyPlayingIndex == audio.id,
+                        isFavorite = audio.id in favoriteAudios,
+                        onFavoriteClick = {
+                            favoriteAudios = if (audio.id in favoriteAudios) {
+                                favoriteAudios - audio.id
+                            } else {
+                                favoriteAudios + audio.id
+                            }
+                        },
+                        onClick = {
+                            if (currentlyPlayingIndex == audio.id) {
+                                try {
+                                    mediaPlayer?.stop()
+                                    mediaPlayer?.release()
+                                    mediaPlayer = null
+                                    currentlyPlayingIndex = null
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Помилка при зупинці аудіо", Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
                                 mediaPlayer?.stop()
                                 mediaPlayer?.release()
-                                mediaPlayer = null
-                                currentlyPlayingIndex = null
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Помилка при зупинці аудіо", Toast.LENGTH_SHORT).show()
-                            }
-                        } else {
-                            // Зупиняємо попереднє аудіо, якщо воно грає
-                            mediaPlayer?.stop()
-                            mediaPlayer?.release()
 
-                            // Починаємо нове аудіо
-                            try {
-                                mediaPlayer = MediaPlayer.create(context, audio.resourceId).apply {
-                                    setAudioStreamType(AudioManager.STREAM_MUSIC)
-                                    setVolume(1.0f, 1.0f)
-                                    setOnPreparedListener { start() }
-                                    setOnCompletionListener {
-                                        currentlyPlayingIndex = null
-                                        release()
-                                        mediaPlayer = null
+                                try {
+                                    mediaPlayer = MediaPlayer.create(context, audio.resourceId).apply {
+                                        setAudioStreamType(AudioManager.STREAM_MUSIC)
+                                        setVolume(1.0f, 1.0f)
+                                        setOnPreparedListener { start() }
+                                        setOnCompletionListener {
+                                            currentlyPlayingIndex = null
+                                            release()
+                                            mediaPlayer = null
+                                        }
+                                        setOnErrorListener { mp, what, extra ->
+                                            Toast.makeText(context, "Помилка відтворення аудіо", Toast.LENGTH_SHORT).show()
+                                            currentlyPlayingIndex = null
+                                            mp.release()
+                                            mediaPlayer = null
+                                            true
+                                        }
                                     }
-                                    setOnErrorListener { mp, what, extra ->
-                                        Toast.makeText(context, "Помилка відтворення аудіо", Toast.LENGTH_SHORT).show()
-                                        currentlyPlayingIndex = null
-                                        mp.release()
-                                        mediaPlayer = null
-                                        true
-                                    }
+                                    currentlyPlayingIndex = audio.id
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "Помилка при створенні аудіо плеєра", Toast.LENGTH_SHORT).show()
                                 }
-                                currentlyPlayingIndex = audio.id
-                            } catch (e: Exception) {
-                                Toast.makeText(context, "Помилка при створенні аудіо плеєра", Toast.LENGTH_SHORT).show()
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
     }
 
-    // Очищаємо ресурси при виході з екрану
     DisposableEffect(Unit) {
         onDispose {
             try {
@@ -127,6 +176,8 @@ fun RelaxMediaScreen(navController: NavController) {
 private fun AudioCard(
     audio: RelaxAudio,
     isPlaying: Boolean,
+    isFavorite: Boolean,
+    onFavoriteClick: () -> Unit,
     onClick: () -> Unit
 ) {
     Card(
@@ -140,12 +191,32 @@ private fun AudioCard(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = if (isPlaying) "Зупинити" else "Відтворити",
-                modifier = Modifier.size(48.dp),
-                tint = MaterialTheme.colorScheme.onSecondaryContainer
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Кнопка відтворення
+                Icon(
+                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                    contentDescription = if (isPlaying) "Зупинити" else "Відтворити",
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                
+                // Кнопка улюбленого
+                IconButton(
+                    onClick = onFavoriteClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (isFavorite) "Видалити з улюблених" else "Додати до улюблених",
+                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+            
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = audio.title,
