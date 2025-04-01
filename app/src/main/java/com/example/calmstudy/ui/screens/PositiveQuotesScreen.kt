@@ -3,7 +3,6 @@ package com.example.calmstudy.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,13 +26,23 @@ fun PositiveQuotesScreen(navController: NavController) {
         "Твої зусилля не будуть марними",
         "Кожен крок вперед - це перемога",
         "Ти маєш талант до успіху",
-        "Віра в себе - це найкращий мотиватор"
+        "Віра в себе - це найкращий мотиватор",
+        "Твоя посмішка змінює світ навколо",
+        "Кожна мрія починається з першого кроку",
+        "У тебе є все необхідне для успіху",
+        "Сьогодні - твій день для великих справ",
+        "Ти джерело натхнення для інших",
+        "Твої думки створюють твою реальність",
+        "Кожна помилка - це урок мудрості",
+        "Ти сильніший за свої страхи",
+        "Твій потенціал безмежний",
+        "Щастя живе в простих моментах"
     )
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Позитивні фрази") },
+                title = { Text("Позитивні поради") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
@@ -77,30 +86,14 @@ fun PositiveQuotesScreen(navController: NavController) {
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+                horizontalArrangement = Arrangement.Center
             ) {
-                IconButton(
-                    onClick = {
-                        currentQuoteIndex = (currentQuoteIndex - 1 + quotes.size) % quotes.size
-                    }
-                ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Попередня фраза")
-                }
-
                 Button(
                     onClick = {
                         currentQuoteIndex = (currentQuoteIndex + 1) % quotes.size
                     }
                 ) {
                     Text("Наступна фраза")
-                }
-
-                IconButton(
-                    onClick = {
-                        currentQuoteIndex = (currentQuoteIndex + 1) % quotes.size
-                    }
-                ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Наступна фраза")
                 }
             }
         }
