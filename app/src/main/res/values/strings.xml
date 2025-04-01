@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">CalmStudy</string>
+    <string name="welcome_message">Вітаємо у CalmStudy!</string>
+    <string name="choose_relaxation">Оберіть спосіб розслаблення:</string>
+    <string name="breathing_exercises">Дихальні вправи</string>
+    <string name="mini_games">Міні-ігри</string>
+    <string name="positive_quotes">Позитивні фрази</string>
+    <string name="back">Назад</string>
+    <string name="start">Почати</string>
+    <string name="pause">Пауза</string>
+    <string name="breathe_in">Вдихайте</string>
+    <string name="breathe_out">Видихайте</string>
+    <string name="breathing_tip">Порада: Вдихайте на 4 рахунки, затримайте на 4, видихайте на 4</string>
+    <string name="start_game">Почати гру</string>
+    <string name="end_game">Закінчити</string>
+    <string name="score">Рахунок: %1$d</string>
+    <string name="previous">Попередня</string>
+    <string name="next">Наступна</string>
+    <string name="previous_quote">Попередня фраза</string>
+    <string name="next_quote">Наступна фраза</string>
+    <string name="congratulations">Вітаємо!</string>
+    <string name="game_complete">Ви знайшли всі пари за %1$d ходів!</string>
+    <string name="moves">Ходи: %1$d</string>
+    <string name="find_differences">Знайдіть відмінності</string>
+    <string name="puzzle">Складання пазлу</string>
+    <string name="memory_game">Знайдіть пару</string>
+    <string name="find_differences_desc">Знайдіть 3 відмінності між зображеннями</string>
+    <string name="puzzle_desc">Складіть пазл з 9 частин</string>
+    <string name="memory_game_desc">Знайдіть всі пари карток</string>
+</resources>
