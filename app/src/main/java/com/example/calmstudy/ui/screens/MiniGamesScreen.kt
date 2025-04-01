@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,119 +17,378 @@ import com.example.calmstudy.ui.games.*
 import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MiniGamesScreen(navController: NavController) {
-    var game by remember { mutableStateOf(MemoryGame()) }
-    val gameState by game.gameState.collectAsState()
+    var selectedGame by remember { mutableStateOf<Game?>(null) }
 
-    LaunchedEffect(Unit) {
-        game.startGame(Difficulty.EASY)
-        while (true) {
-            delay(1.seconds)
-            game.updateTimer()
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Кнопка повернення на головну
+        Button(
+            onClick = { navController.navigate("home") },
+            modifier = Modifier.padding(bottom = 16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "На головну"
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("На головну")
+        }
+
+        // Заголовок
+        Text(
+            text = if (selectedGame == null) "Міні-ігри" else selectedGame!!.title,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Якщо гра не вибрана, показуємо список ігор
+        if (selectedGame == null) {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(games.size) { index ->
+                    GameCard(
+                        game = games[index],
+                        onClick = { selectedGame = games[index] }
+                    )
+                }
+            }
+        } else {
+            // Кнопка "Назад"
+            Button(
+                onClick = { selectedGame = null },
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Назад"
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Назад до списку ігор")
+            }
+
+            // Показуємо вибрану гру
+            when (selectedGame) {
+                games[0] -> TicTacToeGame()
+                games[1] -> MemoryGame()
+                else -> Unit
+            }
+        }
+    }
+}
+
+@Composable
+private fun GameCard(game: Game, onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = game.icon,
+                contentDescription = game.title,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = game.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = game.description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+private data class Game(
+    val title: String,
+    val description: String,
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
+)
+
+private val games = listOf(
+    Game(
+        "Хрестики-нулики",
+        "Класична гра для двох гравців",
+        Icons.Default.Close
+    ),
+    Game(
+        "Знайди пару",
+        "Тренуйте пам'ять та увагу",
+        Icons.Default.Extension
+    )
+)
+
+@Composable
+private fun TicTacToeGame() {
+    var board by remember { mutableStateOf(List(9) { "" }) }
+    var currentPlayer by remember { mutableStateOf("X") }
+    var winner by remember { mutableStateOf<String?>(null) }
+    var isGameOver by remember { mutableStateOf(false) }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Інформація про поточного гравця
+        Text(
+            text = if (winner != null) "Переможець: $winner" else "Хід гравця: $currentPlayer",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Ігрове поле
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            items(9) { index ->
+                TicTacToeCell(
+                    value = board[index],
+                    onClick = {
+                        if (!isGameOver && board[index].isEmpty()) {
+                            val newBoard = board.toMutableList()
+                            newBoard[index] = currentPlayer
+                            board = newBoard
+
+                            // Перевірка на перемогу
+                            if (checkWinner(newBoard, currentPlayer)) {
+                                winner = currentPlayer
+                                isGameOver = true
+                            } else if (newBoard.all { it.isNotEmpty() }) {
+                                isGameOver = true
+                            } else {
+                                currentPlayer = if (currentPlayer == "X") "O" else "X"
+                            }
+                        }
+                    }
+                )
+            }
+        }
+
+        // Кнопка "Нова гра"
+        if (isGameOver) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = {
+                    board = List(9) { "" }
+                    currentPlayer = "X"
+                    winner = null
+                    isGameOver = false
+                }
+            ) {
+                Text("Нова гра")
+            }
+        }
+    }
+}
+
+@Composable
+private fun TicTacToeCell(
+    value: String,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .aspectRatio(1f)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = value,
+                style = MaterialTheme.typography.headlineLarge,
+                color = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+        }
+    }
+}
+
+private fun checkWinner(board: List<String>, player: String): Boolean {
+    // Перевірка рядків
+    for (i in 0..6 step 3) {
+        if (board[i] == player && board[i + 1] == player && board[i + 2] == player) {
+            return true
         }
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Гра пам'яті") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            )
+    // Перевірка стовпців
+    for (i in 0..2) {
+        if (board[i] == player && board[i + 3] == player && board[i + 6] == player) {
+            return true
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+    }
+
+    // Перевірка діагоналей
+    if (board[0] == player && board[4] == player && board[8] == player) {
+        return true
+    }
+    if (board[2] == player && board[4] == player && board[6] == player) {
+        return true
+    }
+
+    return false
+}
+
+@Composable
+private fun MemoryGame() {
+    var cards by remember { mutableStateOf(generateMemoryCards()) }
+    var firstCard by remember { mutableStateOf<Int?>(null) }
+    var secondCard by remember { mutableStateOf<Int?>(null) }
+    var canFlip by remember { mutableStateOf(true) }
+    
+    val scope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Знайдіть пари однакових карток",
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Інформаційна панель
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Очки: ${gameState.score}")
-                Text("Час: ${gameState.timeRemaining.inWholeSeconds}с")
-                Text("Ходи: ${gameState.moves}")
-            }
-
-            // Вибір складності
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Difficulty.values().forEach { difficulty ->
-                    Button(
-                        onClick = { game.changeDifficulty(difficulty) },
-                        enabled = !gameState.isGameOver
-                    ) {
-                        Text(difficulty.name)
-                    }
-                }
-            }
-
-            // Сітка з картками
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(minSize = 80.dp),
-                modifier = Modifier.weight(1f)
-            ) {
-                items(gameState.cards) { card ->
-                    MemoryCardItem(
-                        card = card,
-                        onClick = {
-                            if (game.selectCard(card)) {
-                                // Карти співпали
-                            } else {
-                                // Карти не співпали, перевертаємо їх назад
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    delay(1000)
-                                    game.unflipCards()
+            items(cards.size) { index ->
+                MemoryCard(
+                    card = cards[index],
+                    onClick = {
+                        if (canFlip && !cards[index].isMatched && !cards[index].isFlipped) {
+                            when {
+                                firstCard == null -> {
+                                    firstCard = index
+                                    cards = cards.toMutableList().apply {
+                                        this[index] = this[index].copy(isFlipped = true)
+                                    }
+                                }
+                                secondCard == null && firstCard != index -> {
+                                    secondCard = index
+                                    canFlip = false
+                                    cards = cards.toMutableList().apply {
+                                        this[index] = this[index].copy(isFlipped = true)
+                                    }
+                                    
+                                    scope.launch {
+                                        delay(500) // Затримка перед перевіркою
+                                        
+                                        // Перевіряємо чи карти співпадають
+                                        if (cards[firstCard!!].value == cards[index].value) {
+                                            cards = cards.toMutableList().apply {
+                                                this[firstCard!!] = this[firstCard!!].copy(isMatched = true)
+                                                this[index] = this[index].copy(isMatched = true)
+                                            }
+                                        } else {
+                                            // Якщо не співпадають, перевертаємо назад
+                                            cards = cards.toMutableList().apply {
+                                                this[firstCard!!] = this[firstCard!!].copy(isFlipped = false)
+                                                this[index] = this[index].copy(isFlipped = false)
+                                            }
+                                        }
+                                        
+                                        firstCard = null
+                                        secondCard = null
+                                        canFlip = true
+                                    }
                                 }
                             }
                         }
-                    )
-                }
+                    }
+                )
             }
+        }
 
-            // Кнопка "Нова гра" та рекорд
-            Column(
-                modifier = Modifier.padding(top = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+        // Кнопка "Нова гра"
+        if (cards.all { it.isMatched }) {
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(
+                onClick = { 
+                    cards = generateMemoryCards()
+                    firstCard = null
+                    secondCard = null
+                    canFlip = true
+                }
             ) {
-                if (gameState.isGameOver) {
-                    Text(
-                        "Гра завершена! ${if (gameState.score > gameState.highScore) "Новий рекорд!" else ""}",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+                Text("Нова гра")
+            }
+        }
+    }
+}
 
-                Button(
-                    onClick = { game.resetGame() },
-                    modifier = Modifier.padding(top = 8.dp)
-                ) {
-                    Text("Нова гра")
-                }
-
+@Composable
+private fun MemoryCard(
+    card: MemoryCard,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .aspectRatio(1f)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = if (card.isFlipped || card.isMatched)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            if (card.isFlipped || card.isMatched) {
                 Text(
-                    "Рекорд: ${gameState.highScore}",
-                    modifier = Modifier.padding(top = 8.dp)
+                    text = card.value,
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
         }
     }
+}
+
+private data class MemoryCard(
+    val value: String,
+    val isFlipped: Boolean = false,
+    val isMatched: Boolean = false
+)
+
+private fun generateMemoryCards(): List<MemoryCard> {
+    val emojis = listOf("🌟", "🎮", "🎨", "🎵", "🌈", "📚", "🎪", "🎭")
+    return (emojis + emojis)
+        .shuffled()
+        .map { MemoryCard(it) }
 }

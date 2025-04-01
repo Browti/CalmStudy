@@ -5,6 +5,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -17,10 +19,14 @@ import coil.decode.GifDecoder
 import coil.request.ImageRequest
 import coil.size.Size
 import com.example.calmstudy.R
+import com.example.calmstudy.ui.theme.ThemeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(
+    navController: NavController,
+    themeViewModel: ThemeViewModel
+) {
     val context = LocalContext.current
     val imageLoader = ImageLoader.Builder(context)
         .components {
@@ -28,13 +34,23 @@ fun HomeScreen(navController: NavController) {
         }
         .build()
 
+    val isDarkMode by themeViewModel.isDarkMode.collectAsState()
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("CalmStudy") },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
+                ),
+                actions = {
+                    IconButton(onClick = { themeViewModel.toggleTheme() }) {
+                        Icon(
+                            imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = if (isDarkMode) "Перемкнути на світлу тему" else "Перемкнути на темну тему"
+                        )
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -42,9 +58,9 @@ fun HomeScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // GIF слона
             AsyncImage(
@@ -54,16 +70,18 @@ fun HomeScreen(navController: NavController) {
                     .build(),
                 contentDescription = "Анімація слона",
                 imageLoader = imageLoader,
-                modifier = Modifier.size(200.dp)
+                modifier = Modifier.size(180.dp)
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             
             Text(
                 text = "Ласкаво просимо до CalmStudy!",
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             ElevatedCard(
                 onClick = { navController.navigate("breathing") },
@@ -77,7 +95,7 @@ fun HomeScreen(navController: NavController) {
             }
 
             ElevatedCard(
-                onClick = { navController.navigate("games") },
+                onClick = { navController.navigate("minigames") },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 ListItem(

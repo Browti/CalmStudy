@@ -120,7 +120,6 @@ fun RelaxMediaScreen(navController: NavController) {
         }
     }
 
-    // Модальне вікно для відтворення медіа
     if (selectedType != null) {
         AlertDialog(
             onDismissRequest = { selectedType = null },
@@ -141,11 +140,11 @@ fun RelaxMediaScreen(navController: NavController) {
                     when (selectedType) {
                         MediaType.MUSIC -> {
                             ListItem(
-                                headlineContent = { Text("Лофі музика") },
+                                headlineContent = { Text("Лофі") },
                                 leadingContent = { Icon(Icons.Default.PlayCircle, null) }
                             )
                             ListItem(
-                                headlineContent = { Text("Класична музика") },
+                                headlineContent = { Text("Класична") },
                                 leadingContent = { Icon(Icons.Default.PlayCircle, null) }
                             )
                             ListItem(
