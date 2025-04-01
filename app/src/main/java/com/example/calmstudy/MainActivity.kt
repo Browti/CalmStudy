@@ -17,7 +17,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.calmstudy.ui.components.BottomNavigation
-import com.example.calmstudy.ui.screens.*
+import com.example.calmstudy.ui.screens.HomeScreen
+import com.example.calmstudy.ui.screens.ProfileScreen
+import com.example.calmstudy.ui.screens.BreathingExerciseScreen
+import com.example.calmstudy.ui.screens.MiniGamesScreen
+import com.example.calmstudy.ui.screens.SurveyScreen
+import com.example.calmstudy.ui.screens.PositiveQuotesScreen
+import com.example.calmstudy.ui.screens.RelaxMediaScreen
+import com.example.calmstudy.ui.screens.TimerScreen
 import com.example.calmstudy.ui.theme.CalmStudyTheme
 import com.example.calmstudy.ui.theme.ThemeViewModel
 
@@ -53,7 +60,12 @@ class MainActivity : ComponentActivity() {
                                 composable("home") { HomeScreen(navController, themeViewModel) }
                                 composable("profile") { ProfileScreen(navController) }
                                 composable("breathing") { BreathingExerciseScreen(navController) }
-                                composable("minigames") { MiniGamesScreen(navController) }
+                                composable("minigames") {
+                                    MiniGamesScreen(navController)
+                                }
+                                composable("survey") {
+                                    SurveyScreen(navController)
+                                }
                                 composable("quotes") { PositiveQuotesScreen(navController) }
                                 composable("relax") { RelaxMediaScreen(navController) }
                                 composable("timer") { TimerScreen(navController) }

@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.calmstudy.ui.theme.ThemeViewModel
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +45,8 @@ fun ProfileScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (!isLoggedIn) {
@@ -269,6 +272,25 @@ fun ProfileScreen(
                 )
                 Text("Видалити профіль")
             }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        ElevatedCard(
+            onClick = { navController.navigate("survey") },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            ListItem(
+                headlineContent = { Text("Твій навчальний день") },
+                supportingContent = { Text("Пройдіть опитування про ваш день") },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Assignment,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
         }
     }
 
