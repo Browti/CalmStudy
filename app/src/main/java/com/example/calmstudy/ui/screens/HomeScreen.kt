@@ -126,6 +126,17 @@ fun HomeScreen(
                     leadingContent = { Icon(Icons.Default.Spa, contentDescription = null) }
                 )
             }
+
+            ElevatedCard(
+                onClick = { navController.navigate("timer") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                ListItem(
+                    headlineContent = { Text("Таймер сну/медитації") },
+                    supportingContent = { Text("Встановіть таймер для сну або медитації") },
+                    leadingContent = { Icon(Icons.Default.Timer, contentDescription = null) }
+                )
+            }
         }
     }
 }

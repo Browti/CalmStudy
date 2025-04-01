@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
                                 composable("minigames") { MiniGamesScreen(navController) }
                                 composable("quotes") { PositiveQuotesScreen(navController) }
                                 composable("relax") { RelaxMediaScreen(navController) }
+                                composable("timer") { TimerScreen(navController) }
                             }
                         }
                     }
