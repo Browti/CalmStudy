@@ -10,217 +10,191 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import android.media.MediaPlayer
+import android.media.AudioManager
+import android.widget.Toast
+import com.example.calmstudy.R
 
-data class MediaItem(
-    val title: String,
-    val description: String,
-    val icon: @Composable () -> Unit,
-    val type: MediaType
-)
-
-enum class MediaType {
-    MUSIC, NATURE_SOUNDS, MEDITATION, ASMR, ANIMATION
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RelaxMediaScreen(navController: NavController) {
-    var selectedType by remember { mutableStateOf<MediaType?>(null) }
+    var currentlyPlayingIndex by remember { mutableStateOf<Int?>(null) }
+    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    val context = LocalContext.current
 
-    val mediaItems = listOf(
-        MediaItem(
-            "Спокійна музика",
-            "Лофі, класична та амбієнт музика",
-            { Icon(Icons.Default.MusicNote, contentDescription = null) },
-            MediaType.MUSIC
-        ),
-        MediaItem(
-            "Звуки природи",
-            "Дощ, ліс, океан, вогонь у каміні",
-            { Icon(Icons.Default.Forest, contentDescription = null) },
-            MediaType.NATURE_SOUNDS
-        ),
-        MediaItem(
-            "Медитації",
-            "Гайдовані медитації та дихальні практики",
-            { Icon(Icons.Default.SelfImprovement, contentDescription = null) },
-            MediaType.MEDITATION
-        ),
-        MediaItem(
-            "ASMR",
-            "Заспокійливі звуки та аудіоказки",
-            { Icon(Icons.Default.Hearing, contentDescription = null) },
-            MediaType.ASMR
-        ),
-        MediaItem(
-            "Анімації",
-            "Релакс-анімації та візуальні ефекти",
-            { Icon(Icons.Default.Animation, contentDescription = null) },
-            MediaType.ANIMATION
-        )
-    )
-
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Релакс медіа") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Кнопка повернення на головну
+        Button(
+            onClick = {
+                mediaPlayer?.stop()
+                mediaPlayer?.release()
+                navController.navigate("home")
+            },
+            modifier = Modifier.padding(bottom = 16.dp)
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                items(mediaItems) { item ->
-                    ElevatedCard(
-                        onClick = { selectedType = item.type },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(16.dp)
-                                .fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            item.icon()
-                            Text(
-                                text = item.title,
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = item.description,
-                                style = MaterialTheme.typography.bodySmall,
-                                textAlign = TextAlign.Center
-                            )
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "На головну"
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("На головну")
+        }
+
+        // Заголовок
+        Text(
+            text = "Релаксаційні аудіо",
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Сітка аудіо
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            items(relaxAudios) { audio ->
+                AudioCard(
+                    audio = audio,
+                    isPlaying = currentlyPlayingIndex == audio.id,
+                    onClick = {
+                        if (currentlyPlayingIndex == audio.id) {
+                            // Зупиняємо поточне аудіо
+                            try {
+                                mediaPlayer?.stop()
+                                mediaPlayer?.release()
+                                mediaPlayer = null
+                                currentlyPlayingIndex = null
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Помилка при зупинці аудіо", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            // Зупиняємо попереднє аудіо, якщо воно грає
+                            mediaPlayer?.stop()
+                            mediaPlayer?.release()
+
+                            // Починаємо нове аудіо
+                            try {
+                                mediaPlayer = MediaPlayer.create(context, audio.resourceId).apply {
+                                    setAudioStreamType(AudioManager.STREAM_MUSIC)
+                                    setVolume(1.0f, 1.0f)
+                                    setOnPreparedListener { start() }
+                                    setOnCompletionListener {
+                                        currentlyPlayingIndex = null
+                                        release()
+                                        mediaPlayer = null
+                                    }
+                                    setOnErrorListener { mp, what, extra ->
+                                        Toast.makeText(context, "Помилка відтворення аудіо", Toast.LENGTH_SHORT).show()
+                                        currentlyPlayingIndex = null
+                                        mp.release()
+                                        mediaPlayer = null
+                                        true
+                                    }
+                                }
+                                currentlyPlayingIndex = audio.id
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Помилка при створенні аудіо плеєра", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
-                }
+                )
             }
         }
     }
 
-    if (selectedType != null) {
-        AlertDialog(
-            onDismissRequest = { selectedType = null },
-            title = {
-                Text(
-                    when (selectedType) {
-                        MediaType.MUSIC -> "Спокійна музика"
-                        MediaType.NATURE_SOUNDS -> "Звуки природи"
-                        MediaType.MEDITATION -> "Медитації"
-                        MediaType.ASMR -> "ASMR"
-                        MediaType.ANIMATION -> "Анімації"
-                        null -> ""
-                    }
-                )
-            },
-            text = {
-                Column {
-                    when (selectedType) {
-                        MediaType.MUSIC -> {
-                            ListItem(
-                                headlineContent = { Text("Лофі") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Класична") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Амбієнт") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                        }
-                        MediaType.NATURE_SOUNDS -> {
-                            ListItem(
-                                headlineContent = { Text("Дощ") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Ліс") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Океан") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Вогонь у каміні") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                        }
-                        MediaType.MEDITATION -> {
-                            ListItem(
-                                headlineContent = { Text("Ранкова медитація") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Вечірня медитація") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Дихальні практики") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                        }
-                        MediaType.ASMR -> {
-                            ListItem(
-                                headlineContent = { Text("Шепіт") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Заспокійливі звуки") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Аудіоказки") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                        }
-                        MediaType.ANIMATION -> {
-                            ListItem(
-                                headlineContent = { Text("Хвилі") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Водоспади") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                            ListItem(
-                                headlineContent = { Text("Сонячні промені") },
-                                leadingContent = { Icon(Icons.Default.PlayCircle, null) }
-                            )
-                        }
-                        null -> {}
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { selectedType = null }) {
-                    Text("Закрити")
-                }
+    // Очищаємо ресурси при виході з екрану
+    DisposableEffect(Unit) {
+        onDispose {
+            try {
+                mediaPlayer?.stop()
+                mediaPlayer?.release()
+            } catch (e: Exception) {
+                // Ігноруємо помилки при очищенні
             }
-        )
+        }
     }
 }
+
+@Composable
+private fun AudioCard(
+    audio: RelaxAudio,
+    isPlaying: Boolean,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                contentDescription = if (isPlaying) "Зупинити" else "Відтворити",
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSecondaryContainer
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = audio.title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = audio.duration,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+data class RelaxAudio(
+    val id: Int,
+    val title: String,
+    val duration: String,
+    val resourceId: Int
+)
+
+// Список аудіо
+private val relaxAudios = listOf(
+    RelaxAudio(
+        id = 0,
+        title = "Дощ",
+        duration = "5:00",
+        resourceId = R.raw.rain
+    ),
+    RelaxAudio(
+        id = 1,
+        title = "Океан",
+        duration = "5:00",
+        resourceId = R.raw.ocean
+    ),
+    RelaxAudio(
+        id = 2,
+        title = "Ліс",
+        duration = "5:00",
+        resourceId = R.raw.forest
+    ),
+    RelaxAudio(
+        id = 3,
+        title = "Медитація",
+        duration = "5:00",
+        resourceId = R.raw.meditation
+    )
+)
