@@ -16,16 +16,90 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+enum class BreathingState {
+    INHALE,
+    HOLD,
+    EXHALE,
+    REST
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BreathingExerciseScreen(navController: NavController) {
-    var isBreathing by remember { mutableStateOf(false) }
+    var isExerciseActive by remember { mutableStateOf(false) }
+    var breathingState by remember { mutableStateOf(BreathingState.REST) }
+    var currentCycle by remember { mutableStateOf(0) }
+    val maxCycles = 5
+
+    val coroutineScope = rememberCoroutineScope()
+
+    // Анімація розміру кола
+    val targetScale = when (breathingState) {
+        BreathingState.INHALE -> 2.0f
+        BreathingState.HOLD -> 2.0f
+        BreathingState.EXHALE -> 1.0f
+        BreathingState.REST -> 1.0f
+    }
+
     val scale by animateFloatAsState(
-        targetValue = if (isBreathing) 1.5f else 1f,
-        animationSpec = tween(durationMillis = 4000),
+        targetValue = targetScale,
+        animationSpec = tween(
+            durationMillis = when (breathingState) {
+                BreathingState.INHALE -> 4000
+                BreathingState.HOLD -> 100
+                BreathingState.EXHALE -> 4000
+                BreathingState.REST -> 100
+            }
+        ),
         label = "breathing"
     )
+
+    // Анімація кольору
+    val targetAlpha = when (breathingState) {
+        BreathingState.INHALE -> 0.6f
+        BreathingState.HOLD -> 0.8f
+        BreathingState.EXHALE -> 0.3f
+        BreathingState.REST -> 0.2f
+    }
+
+    val backgroundColor by animateFloatAsState(
+        targetValue = targetAlpha,
+        animationSpec = tween(durationMillis = 1000),
+        label = "alpha"
+    )
+
+    // Логіка дихальної вправи
+    LaunchedEffect(isExerciseActive) {
+        if (isExerciseActive) {
+            while (currentCycle < maxCycles && isExerciseActive) {
+                // Вдих
+                breathingState = BreathingState.INHALE
+                delay(4000)
+
+                // Затримка
+                breathingState = BreathingState.HOLD
+                delay(4000)
+
+                // Видих
+                breathingState = BreathingState.EXHALE
+                delay(4000)
+
+                // Пауза
+                breathingState = BreathingState.REST
+                delay(2000)
+
+                currentCycle++
+            }
+            // Завершення циклу
+            if (currentCycle >= maxCycles) {
+                isExerciseActive = false
+                currentCycle = 0
+                breathingState = BreathingState.REST
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -51,7 +125,12 @@ fun BreathingExerciseScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
             Text(
-                text = "Повільно вдихайте та видихайте",
+                text = when (breathingState) {
+                    BreathingState.INHALE -> "Вдихайте..."
+                    BreathingState.HOLD -> "Затримайте дихання..."
+                    BreathingState.EXHALE -> "Видихайте..."
+                    BreathingState.REST -> "Підготуйтесь..."
+                },
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
@@ -61,27 +140,52 @@ fun BreathingExerciseScreen(navController: NavController) {
                     .size(200.dp)
                     .scale(scale)
                     .background(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = backgroundColor),
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = if (isBreathing) "Вдихайте" else "Видихайте",
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = when (breathingState) {
+                            BreathingState.INHALE -> "4"
+                            BreathingState.HOLD -> "4"
+                            BreathingState.EXHALE -> "4"
+                            BreathingState.REST -> "2"
+                        },
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onPrimary
+                    )
+                    if (isExerciseActive) {
+                        Text(
+                            text = "Цикл ${currentCycle + 1}/$maxCycles",
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
             }
 
             Button(
-                onClick = { isBreathing = !isBreathing },
+                onClick = {
+                    if (!isExerciseActive) {
+                        currentCycle = 0
+                    }
+                    isExerciseActive = !isExerciseActive
+                },
                 modifier = Modifier.padding(top = 16.dp)
             ) {
-                Text(if (isBreathing) "Пауза" else "Почати")
+                Text(if (isExerciseActive) "Зупинити" else "Почати")
             }
 
             Text(
-                text = "Порада: Вдихайте на 4 рахунки, затримайте на 4, видихайте на 4",
+                text = "Техніка 4-4-4-2:\n" +
+                        "• Вдих на 4 секунди\n" +
+                        "• Затримка на 4 секунди\n" +
+                        "• Видих на 4 секунди\n" +
+                        "• Пауза 2 секунди",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center
             )
