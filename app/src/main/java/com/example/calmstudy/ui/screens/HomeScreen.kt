@@ -33,14 +33,8 @@ fun HomeScreen(navController: NavController) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Вітаємо у CalmStudy!",
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center
-            )
-
-            Text(
-                text = "Оберіть спосіб розслаблення:",
-                style = MaterialTheme.typography.bodyLarge,
+                text = "Оберіть вправу для зняття стресу:",
+                style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
 
@@ -48,69 +42,44 @@ fun HomeScreen(navController: NavController) {
                 onClick = { navController.navigate("breathing") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Air,
-                        contentDescription = "Дихальні вправи",
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        text = "Дихальні вправи",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+                ListItem(
+                    headlineContent = { Text("Дихальні вправи") },
+                    supportingContent = { Text("Заспокійливі дихальні техніки") },
+                    leadingContent = { Icon(Icons.Default.Air, contentDescription = null) }
+                )
             }
 
             ElevatedCard(
                 onClick = { navController.navigate("games") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Games,
-                        contentDescription = "Міні-ігри",
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        text = "Міні-ігри",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+                ListItem(
+                    headlineContent = { Text("Міні-ігри") },
+                    supportingContent = { Text("Ігри для відволікання від стресу") },
+                    leadingContent = { Icon(Icons.Default.Games, contentDescription = null) }
+                )
             }
 
             ElevatedCard(
                 onClick = { navController.navigate("quotes") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Row(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.FormatQuote,
-                        contentDescription = "Позитивні фрази",
-                        modifier = Modifier.size(32.dp)
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        text = "Позитивні фрази",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
+                ListItem(
+                    headlineContent = { Text("Позитивні цитати") },
+                    supportingContent = { Text("Мотиваційні та заспокійливі цитати") },
+                    leadingContent = { Icon(Icons.Default.FormatQuote, contentDescription = null) }
+                )
+            }
+
+            ElevatedCard(
+                onClick = { navController.navigate("relax") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                ListItem(
+                    headlineContent = { Text("Релакс медіа") },
+                    supportingContent = { Text("Музика, звуки природи та медитації") },
+                    leadingContent = { Icon(Icons.Default.Spa, contentDescription = null) }
+                )
             }
         }
     }

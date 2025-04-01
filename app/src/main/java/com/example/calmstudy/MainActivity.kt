@@ -37,6 +37,9 @@ class MainActivity : ComponentActivity() {
                         composable("quotes") {
                             PositiveQuotesScreen(navController)
                         }
+                        composable("relax") {
+                            RelaxMediaScreen(navController)
+                        }
                     }
                 }
             }
