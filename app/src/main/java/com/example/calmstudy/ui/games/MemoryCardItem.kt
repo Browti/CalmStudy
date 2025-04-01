@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -25,7 +27,7 @@ fun MemoryCardItem(
     modifier: Modifier = Modifier
 ) {
     val rotation by animateFloatAsState(
-        targetValue = if (card.isFlipped) 180f else 0f,
+        targetValue = if (card.isFlipped || card.isMatched) 180f else 0f,
         animationSpec = tween(durationMillis = 400),
         label = "card_flip"
     )
@@ -48,17 +50,23 @@ fun MemoryCardItem(
             .clickable(enabled = !card.isMatched && !card.isFlipped) { onClick() },
         elevation = CardDefaults.cardElevation(
             defaultElevation = if (card.isMatched) 0.dp else 4.dp
+        ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (card.isMatched)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
+            else MaterialTheme.colorScheme.surface
         )
     ) {
         Box(
             contentAlignment = Alignment.Center
         ) {
-            if (rotation <= 90f) {
+            if (rotation <= 90f && !card.isMatched) {
                 // Показуємо рубашку карти
                 Text(
                     text = "?",
                     fontSize = 24.sp,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             } else {
                 // Показуємо емодзі
