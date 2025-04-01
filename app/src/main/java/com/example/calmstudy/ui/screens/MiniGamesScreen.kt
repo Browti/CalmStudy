@@ -1,6 +1,9 @@
 package com.example.calmstudy.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -10,24 +13,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.calmstudy.ui.games.*
+import kotlinx.coroutines.*
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MiniGamesScreen(navController: NavController) {
-    var currentGame by remember { mutableStateOf(0) }
-    var score by remember { mutableStateOf(0) }
-    var isPlaying by remember { mutableStateOf(false) }
+    var game by remember { mutableStateOf(MemoryGame()) }
+    val gameState by game.gameState.collectAsState()
 
-    val games = listOf(
-        "Знайдіть відмінності" to "Знайдіть 3 відмінності між зображеннями",
-        "Складання пазлу" to "Складіть пазл з 9 частин",
-        "Знайдіть пару" to "Знайдіть всі пари карток"
-    )
+    LaunchedEffect(Unit) {
+        game.startGame(Difficulty.EASY)
+        while (true) {
+            delay(1.seconds)
+            game.updateTimer()
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Міні-ігри") },
+                title = { Text("Гра пам'яті") },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
@@ -47,72 +54,81 @@ fun MiniGamesScreen(navController: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = games[currentGame].first,
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center
-            )
+            // Інформаційна панель
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Очки: ${gameState.score}")
+                Text("Час: ${gameState.timeRemaining.inWholeSeconds}с")
+                Text("Ходи: ${gameState.moves}")
+            }
 
-            Text(
-                text = games[currentGame].second,
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
-            )
-
-            if (isPlaying) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Ігрове поле",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Text(
-                        text = "Рахунок: $score",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Button(onClick = { isPlaying = false }) {
-                        Text("Закінчити")
+            // Вибір складності
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Difficulty.values().forEach { difficulty ->
+                    Button(
+                        onClick = { game.changeDifficulty(difficulty) },
+                        enabled = !gameState.isGameOver
+                    ) {
+                        Text(difficulty.name)
                     }
                 }
-            } else {
+            }
+
+            // Сітка з картками
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 80.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                items(gameState.cards) { card ->
+                    MemoryCardItem(
+                        card = card,
+                        onClick = {
+                            if (game.selectCard(card)) {
+                                // Карти співпали
+                            } else {
+                                // Карти не співпали, перевертаємо їх назад
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    delay(1000)
+                                    game.unflipCards()
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+
+            // Кнопка "Нова гра" та рекорд
+            Column(
+                modifier = Modifier.padding(top = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                if (gameState.isGameOver) {
+                    Text(
+                        "Гра завершена! ${if (gameState.score > gameState.highScore) "Новий рекорд!" else ""}",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                }
+
                 Button(
-                    onClick = { isPlaying = true },
-                    modifier = Modifier.padding(16.dp)
+                    onClick = { game.resetGame() },
+                    modifier = Modifier.padding(top = 8.dp)
                 ) {
-                    Text("Почати гру")
+                    Text("Нова гра")
                 }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(
-                        onClick = {
-                            if (currentGame > 0) currentGame--
-                        },
-                        enabled = currentGame > 0
-                    ) {
-                        Text("Попередня")
-                    }
-                    Button(
-                        onClick = {
-                            if (currentGame < games.size - 1) currentGame++
-                        },
-                        enabled = currentGame < games.size - 1
-                    ) {
-                        Text("Наступна")
-                    }
-                }
+                Text(
+                    "Рекорд: ${gameState.highScore}",
+                    modifier = Modifier.padding(top = 8.dp)
+                )
             }
         }
     }

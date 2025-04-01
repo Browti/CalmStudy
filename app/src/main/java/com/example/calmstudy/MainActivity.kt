@@ -10,10 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.calmstudy.ui.screens.HomeScreen
-import com.example.calmstudy.ui.screens.BreathingExerciseScreen
-import com.example.calmstudy.ui.screens.MiniGamesScreen
-import com.example.calmstudy.ui.screens.PositiveQuotesScreen
+import com.example.calmstudy.ui.screens.*
 import com.example.calmstudy.ui.theme.CalmStudyTheme
 
 class MainActivity : ComponentActivity() {
