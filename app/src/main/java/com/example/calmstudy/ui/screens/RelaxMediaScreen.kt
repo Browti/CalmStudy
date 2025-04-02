@@ -107,7 +107,7 @@ fun RelaxMediaScreen(navController: NavController) {
         }
 
         // Заголовок
-        Text(
+                            Text(
             text = when {
                 selectedMediaType == MediaType.AUDIO && showOnlyFavorites -> "Улюблені аудіо"
                 selectedMediaType == MediaType.AUDIO -> "Релаксаційні аудіо"
@@ -240,7 +240,7 @@ private fun EmptyFavoritesMessage() {
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(
+                Text(
             text = "У вас ще немає улюблених медіа.\nДодайте їх, натиснувши на сердечко.",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge
@@ -324,8 +324,8 @@ private fun VideoPlayer(
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
-        },
-        text = {
+            },
+            text = {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

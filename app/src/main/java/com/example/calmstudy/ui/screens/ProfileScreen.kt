@@ -119,6 +119,26 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        // Кнопка опитування
+        ElevatedCard(
+            onClick = { navController.navigate("survey") },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            ListItem(
+                headlineContent = { Text("Твій навчальний день") },
+                supportingContent = { Text("Пройдіть опитування про ваш день") },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Assignment,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         if (isLoggedIn) {
             // Налаштування
             Card(
@@ -240,57 +260,54 @@ fun ProfileScreen(
             Spacer(modifier = Modifier.height(32.dp))
 
             // Кнопка виходу з профілю
-            Button(
+            ElevatedButton(
                 onClick = { isLoggedIn = false },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondary
+                colors = ButtonDefaults.elevatedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.secondary,
+                    contentColor = MaterialTheme.colorScheme.onSecondary
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Logout,
                     contentDescription = "Вийти з профілю",
-                    modifier = Modifier.padding(end = 8.dp)
+                    modifier = Modifier.padding(end = 8.dp),
+                    tint = MaterialTheme.colorScheme.onSecondary
                 )
-                Text("Вийти з профілю")
+                Text(
+                    text = "Вийти з профілю",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondary
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
             // Кнопка видалення профілю
-            Button(
+            ElevatedButton(
                 onClick = { showDeleteDialog = true },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
+                colors = ButtonDefaults.elevatedButtonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.onError
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Delete,
                     contentDescription = "Видалити профіль",
-                    modifier = Modifier.padding(end = 8.dp)
+                    modifier = Modifier.padding(end = 8.dp),
+                    tint = MaterialTheme.colorScheme.onError
                 )
-                Text("Видалити профіль")
+                Text(
+                    text = "Видалити профіль",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onError
+                )
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        ElevatedCard(
-            onClick = { navController.navigate("survey") },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            ListItem(
-                headlineContent = { Text("Твій навчальний день") },
-                supportingContent = { Text("Пройдіть опитування про ваш день") },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Default.Assignment,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                }
-            )
         }
     }
 
