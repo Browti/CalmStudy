@@ -16,6 +16,7 @@ import androidx.navigation.NavController
 import com.example.calmstudy.ui.games.*
 import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.seconds
+import androidx.compose.ui.graphics.Color
 
 private val games = listOf(
     Game(
@@ -68,7 +69,7 @@ fun MinigamesScreen(navController: NavController) {
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 games.forEach { game ->
-                    Card(
+                    ElevatedCard(
                         onClick = {
                             when (game) {
                                 games[0] -> selectedGame = game
@@ -76,22 +77,64 @@ fun MinigamesScreen(navController: NavController) {
                                 games[2] -> navController.navigate("snake")
                             }
                         },
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(100.dp),
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = when (game) {
+                                games[0] -> Color(0xFF90EE90) // зелений
+                                games[1] -> Color(0xFFFFE4B5) // жовтий
+                                else -> Color(0xFFE6E6FA)  // фіолетовий
+                            }
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(
+                            defaultElevation = 6.dp,
+                            pressedElevation = 2.dp,
+                            hoveredElevation = 8.dp
                         )
                     ) {
-                        ListItem(
-                            headlineContent = { Text(game.title) },
-                            supportingContent = { Text(game.description) },
-                            leadingContent = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
                                 Icon(
                                     imageVector = game.icon,
                                     contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
+                                    modifier = Modifier.size(32.dp),
+                                    tint = when (game) {
+                                        games[0] -> Color(0xFF006400) // темно-зелений
+                                        games[1] -> Color(0xFFB8860B) // темно-жовтий
+                                        else -> Color(0xFF483D8B) // темно-фіолетовий
+                                    }
                                 )
+                                Column {
+                                    Text(
+                                        game.title,
+                                        style = MaterialTheme.typography.titleLarge,
+                                        color = when (game) {
+                                            games[0] -> Color(0xFF006400) // темно-зелений
+                                            games[1] -> Color(0xFFB8860B) // темно-жовтий
+                                            else -> Color(0xFF483D8B) // темно-фіолетовий
+                                        }
+                                    )
+                                    Text(
+                                        game.description,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = when (game) {
+                                            games[0] -> Color(0xFF006400) // темно-зелений
+                                            games[1] -> Color(0xFFB8860B) // темно-жовтий
+                                            else -> Color(0xFF483D8B) // темно-фіолетовий
+                                        }
+                                    )
+                                }
                             }
-                        )
+                        }
                     }
                 }
             }
@@ -234,11 +277,20 @@ private fun TicTacToeCell(
 ) {
     Card(
         onClick = onClick,
-                modifier = Modifier
+        modifier = Modifier
             .aspectRatio(1f)
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer
+            containerColor = when (value) {
+                "X" -> Color(0xFF90EE90) // зелений
+                "O" -> Color(0xFFFFE4B5) // жовтий
+                else -> Color(0xFFE6E6FA) // фіолетовий
+            }
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp,
+            pressedElevation = 2.dp,
+            hoveredElevation = 6.dp
         )
     ) {
         Box(
@@ -248,7 +300,11 @@ private fun TicTacToeCell(
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
+                color = when (value) {
+                    "X" -> Color(0xFF006400) // темно-зелений
+                    "O" -> Color(0xFFB8860B) // темно-жовтий
+                    else -> Color(0xFF483D8B) // темно-фіолетовий
+                }
             )
         }
     }
@@ -381,9 +437,9 @@ private fun MemoryCard(
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = if (card.isFlipped || card.isMatched)
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.7f)
             else
-                MaterialTheme.colorScheme.secondaryContainer
+                MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.3f)
         )
     ) {
         Box(
@@ -394,7 +450,7 @@ private fun MemoryCard(
                 Text(
                     text = card.value,
                     style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
             }
         }
