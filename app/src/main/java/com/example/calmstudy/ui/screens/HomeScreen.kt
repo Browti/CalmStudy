@@ -2,6 +2,8 @@ package com.example.calmstudy.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -21,6 +23,7 @@ import coil.request.ImageRequest
 import coil.size.Size
 import com.example.calmstudy.R
 import com.example.calmstudy.ui.theme.ThemeViewModel
+import coe.example.calmstudy.ui.components.AnimatedBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +40,19 @@ fun HomeScreen(
 
     val isDarkMode by themeViewModel.isDarkMode.collectAsState()
 
-    Scaffold(
-        topBar = {
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Анімований фон першим, щоб був позаду
+        AnimatedBackground(
+            modifier = Modifier.fillMaxSize(),
+            primaryColor = MaterialTheme.colorScheme.background,
+            secondaryColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+        )
+        
+        // Основний контент поверх фону
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // TopAppBar
             TopAppBar(
                 title = { Text("CalmStudy") },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -53,96 +67,121 @@ fun HomeScreen(
                     }
                 }
             )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // GIF слона
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(R.drawable.elephant1312)
-                    .size(Size.ORIGINAL)
-                    .build(),
-                contentDescription = "Анімація слона",
-                imageLoader = imageLoader,
-                modifier = Modifier.size(180.dp)
-            )
-            
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            Text(
-                text = "Ласкаво просимо до CalmStudy!",
-                style = MaterialTheme.typography.headlineSmall,
-                textAlign = TextAlign.Center
-            )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            ElevatedCard(
-                onClick = { navController.navigate("breathing") },
-                modifier = Modifier.fillMaxWidth()
+            // Основний контент
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                ListItem(
-                    headlineContent = { Text("Дихальні вправи") },
-                    supportingContent = { Text("Заспокійливі дихальні техніки") },
-                    leadingContent = { Icon(Icons.Default.Air, contentDescription = null) }
+                // GIF слона
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(R.drawable.elephant1312)
+                        .size(Size.ORIGINAL)
+                        .build(),
+                    contentDescription = "Анімація слона",
+                    imageLoader = imageLoader,
+                    modifier = Modifier.size(150.dp)
                 )
-            }
+                
+                Text(
+                    text = "Ласкаво просимо до CalmStudy!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    textAlign = TextAlign.Center
+                )
 
-            ElevatedCard(
-                onClick = { navController.navigate("minigames") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ListItem(
-                    headlineContent = { Text("Міні-ігри") },
-                    supportingContent = { Text("Ігри для відволікання від стресу") },
-                    leadingContent = { Icon(Icons.Default.Games, contentDescription = null) }
-                )
-            }
+                // Картки з функціоналом
+                ElevatedCard(
+                    onClick = { navController.navigate("breathing") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Дихальні вправи") },
+                        supportingContent = { Text("Заспокійливі дихальні техніки") },
+                        leadingContent = { 
+                            Icon(
+                                imageVector = Icons.Default.Air,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                }
 
-            ElevatedCard(
-                onClick = { navController.navigate("quotes") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ListItem(
-                    headlineContent = { Text("Позитивні цитати") },
-                    supportingContent = { Text("Мотиваційні та заспокійливі цитати") },
-                    leadingContent = { Icon(Icons.Default.FormatQuote, contentDescription = null) }
-                )
-            }
+                ElevatedCard(
+                    onClick = { navController.navigate("minigames") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Міні-ігри") },
+                        supportingContent = { Text("Ігри для відволікання від стресу") },
+                        leadingContent = { 
+                            Icon(
+                                imageVector = Icons.Default.Games,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                }
 
-            ElevatedCard(
-                onClick = { navController.navigate("relax") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ListItem(
-                    headlineContent = { Text("Релакс медіа") },
-                    supportingContent = { Text("Музика, звуки природи та медитації") },
-                    leadingContent = { Icon(Icons.Default.Spa, contentDescription = null) }
-                )
-            }
+                ElevatedCard(
+                    onClick = { navController.navigate("quotes") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Позитивні цитати") },
+                        supportingContent = { Text("Мотиваційні та заспокійливі цитати") },
+                        leadingContent = { 
+                            Icon(
+                                imageVector = Icons.Default.FormatQuote,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                }
 
-            ElevatedCard(
-                onClick = { navController.navigate("timer") },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                ListItem(
-                    headlineContent = { Text("Таймер сну/медитації") },
-                    supportingContent = { Text("Встановіть таймер для сну або медитації") },
-                    leadingContent = {
-                        Icon(
-                            imageVector = Icons.Default.Timer,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                )
+                ElevatedCard(
+                    onClick = { navController.navigate("relax") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Релакс медіа") },
+                        supportingContent = { Text("Музика, звуки природи та медитації") },
+                        leadingContent = { 
+                            Icon(
+                                imageVector = Icons.Default.Spa,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                }
+
+                ElevatedCard(
+                    onClick = { navController.navigate("timer") },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    ListItem(
+                        headlineContent = { Text("Таймер сну/медитації") },
+                        supportingContent = { Text("Встановіть таймер для сну або медитації") },
+                        leadingContent = {
+                            Icon(
+                                imageVector = Icons.Default.Timer,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    )
+                }
+
+                // Додаємо відступ внизу для кращого вигляду при прокрутці
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }

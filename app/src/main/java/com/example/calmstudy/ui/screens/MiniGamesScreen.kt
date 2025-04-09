@@ -147,7 +147,7 @@ private fun TicTacToeGame() {
     var winner by remember { mutableStateOf<String?>(null) }
     var isGameOver by remember { mutableStateOf(false) }
 
-    Column(
+        Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -213,7 +213,7 @@ private fun TicTacToeCell(
 ) {
     Card(
         onClick = onClick,
-        modifier = Modifier
+                modifier = Modifier
             .aspectRatio(1f)
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -278,7 +278,7 @@ private fun MemoryGame() {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        LazyVerticalGrid(
+            LazyVerticalGrid(
             columns = GridCells.Fixed(4),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -286,7 +286,7 @@ private fun MemoryGame() {
             items(cards.size) { index ->
                 MemoryCard(
                     card = cards[index],
-                    onClick = {
+                        onClick = {
                         if (canFlip && !cards[index].isMatched && !cards[index].isFlipped) {
                             when {
                                 firstCard == null -> {
@@ -311,7 +311,7 @@ private fun MemoryGame() {
                                                 this[firstCard!!] = this[firstCard!!].copy(isMatched = true)
                                                 this[index] = this[index].copy(isMatched = true)
                                             }
-                                        } else {
+                            } else {
                                             // Якщо не співпадають, перевертаємо назад
                                             cards = cards.toMutableList().apply {
                                                 this[firstCard!!] = this[firstCard!!].copy(isFlipped = false)
@@ -324,12 +324,12 @@ private fun MemoryGame() {
                                         canFlip = true
                                     }
                                 }
+                                }
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
-        }
 
         // Кнопка "Нова гра"
         if (cards.all { it.isMatched }) {
@@ -341,8 +341,8 @@ private fun MemoryGame() {
                     secondCard = null
                     canFlip = true
                 }
-            ) {
-                Text("Нова гра")
+                ) {
+                    Text("Нова гра")
             }
         }
     }
