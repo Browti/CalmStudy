@@ -20,13 +20,14 @@ import com.example.calmstudy.ui.components.BottomNavigation
 import com.example.calmstudy.ui.screens.HomeScreen
 import com.example.calmstudy.ui.screens.ProfileScreen
 import com.example.calmstudy.ui.screens.BreathingExerciseScreen
-import com.example.calmstudy.ui.screens.MiniGamesScreen
+import com.example.calmstudy.ui.screens.MinigamesScreen
 import com.example.calmstudy.ui.screens.SurveyScreen
 import com.example.calmstudy.ui.screens.PositiveQuotesScreen
 import com.example.calmstudy.ui.screens.RelaxMediaScreen
 import com.example.calmstudy.ui.screens.TimerScreen
 import com.example.calmstudy.ui.theme.CalmStudyTheme
 import com.example.calmstudy.ui.theme.ThemeViewModel
+import com.example.calmstudy.ui.games.SnakeGame
 
 class MainActivity : ComponentActivity() {
     private val themeViewModel: ThemeViewModel by viewModels()
@@ -61,7 +62,10 @@ class MainActivity : ComponentActivity() {
                                 composable("profile") { ProfileScreen(navController) }
                                 composable("breathing") { BreathingExerciseScreen(navController) }
                                 composable("minigames") {
-                                    MiniGamesScreen(navController)
+                                    MinigamesScreen(navController)
+                                }
+                                composable("snake") {
+                                    SnakeGame(navController)
                                 }
                                 composable("survey") {
                                     SurveyScreen(navController)

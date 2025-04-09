@@ -17,68 +17,97 @@ import com.example.calmstudy.ui.games.*
 import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.seconds
 
+private val games = listOf(
+    Game(
+        "Хрестики-нулики",
+        "Класична гра для двох гравців",
+        Icons.Default.Close
+    ),
+    Game(
+        "Знайди пару",
+        "Тренуйте пам'ять та увагу",
+        Icons.Default.Extension
+    ),
+    Game(
+        "Змійка",
+        "Класична гра змійка",
+        Icons.Default.Games
+    )
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MiniGamesScreen(navController: NavController) {
+fun MinigamesScreen(navController: NavController) {
     var selectedGame by remember { mutableStateOf<Game?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // Кнопка повернення на головну
-        Button(
-            onClick = { navController.navigate("home") },
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ArrowBack,
-                contentDescription = "На головну"
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Міні-ігри") },
+                navigationIcon = {
+                    IconButton(onClick = { 
+                        if (selectedGame == null) {
+                            navController.navigateUp()
+                        } else {
+                            selectedGame = null
+                        }
+                    }) {
+                        Icon(Icons.Default.ArrowBack, "Назад")
+                    }
+                }
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text("На головну")
         }
-
-        // Заголовок
-        Text(
-            text = if (selectedGame == null) "Міні-ігри" else selectedGame!!.title,
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        // Якщо гра не вибрана, показуємо список ігор
+    ) { paddingValues ->
         if (selectedGame == null) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            // Показуємо список ігор
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(games.size) { index ->
-                    GameCard(
-                        game = games[index],
-                        onClick = { selectedGame = games[index] }
-                    )
+                games.forEach { game ->
+                    Card(
+                        onClick = {
+                            when (game) {
+                                games[0] -> selectedGame = game
+                                games[1] -> selectedGame = game
+                                games[2] -> navController.navigate("snake")
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    ) {
+                        ListItem(
+                            headlineContent = { Text(game.title) },
+                            supportingContent = { Text(game.description) },
+                            leadingContent = {
+                                Icon(
+                                    imageVector = game.icon,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                        )
+                    }
                 }
             }
         } else {
-            // Кнопка "Назад"
-            Button(
-                onClick = { selectedGame = null },
-                modifier = Modifier.padding(bottom = 16.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Назад"
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Назад до списку ігор")
-            }
-
             // Показуємо вибрану гру
-            when (selectedGame) {
-                games[0] -> TicTacToeGame()
-                games[1] -> MemoryGame()
-                else -> Unit
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp)
+            ) {
+                when (selectedGame) {
+                    games[0] -> TicTacToeGame()
+                    games[1] -> MemoryGame()
+                    else -> Unit
+                }
             }
         }
     }
@@ -88,14 +117,19 @@ fun MiniGamesScreen(navController: NavController) {
 private fun GameCard(game: Game, onClick: () -> Unit) {
     Card(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(1f),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Icon(
                 imageVector = game.icon,
@@ -125,19 +159,6 @@ private data class Game(
     val title: String,
     val description: String,
     val icon: androidx.compose.ui.graphics.vector.ImageVector
-)
-
-private val games = listOf(
-    Game(
-        "Хрестики-нулики",
-        "Класична гра для двох гравців",
-        Icons.Default.Close
-    ),
-    Game(
-        "Знайди пару",
-        "Тренуйте пам'ять та увагу",
-        Icons.Default.Extension
-    )
 )
 
 @Composable

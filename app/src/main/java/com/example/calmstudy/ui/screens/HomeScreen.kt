@@ -112,22 +112,19 @@ fun HomeScreen(
                     )
                 }
 
-                ElevatedCard(
-                    onClick = { navController.navigate("minigames") },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    ListItem(
-                        headlineContent = { Text("Міні-ігри") },
-                        supportingContent = { Text("Ігри для відволікання від стресу") },
-                        leadingContent = { 
-                            Icon(
-                                imageVector = Icons.Default.Games,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                    )
-                }
+                // Картка для міні-ігор
+                ListItem(
+                    headlineContent = { Text("Міні-ігри") },
+                    supportingContent = { Text("Розважальні міні-ігри для відпочинку") },
+                    leadingContent = {
+                        Icon(
+                            imageVector = Icons.Default.Games,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    },
+                    modifier = Modifier.clickable { navController.navigate("minigames") }
+                )
 
                 ElevatedCard(
                     onClick = { navController.navigate("quotes") },
