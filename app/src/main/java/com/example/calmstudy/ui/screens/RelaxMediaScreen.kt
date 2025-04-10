@@ -1,5 +1,10 @@
 package com.example.calmstudy.ui.screens
 
+import android.media.AudioManager
+import android.media.MediaPlayer
+import android.net.Uri
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -10,23 +15,31 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
-import android.media.MediaPlayer
-import android.media.AudioManager
-import android.widget.Toast
-import android.widget.VideoView
-import android.net.Uri
 import android.content.Intent
 import com.example.calmstudy.R
+import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.ArrowBack
+import android.widget.VideoView
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.background
+import androidx.compose.material.icons.filled.BrokenImage
+import androidx.compose.ui.graphics.Color
 
 enum class MediaType {
-    AUDIO, VIDEO
+    AUDIO, VIDEO, IMAGES
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RelaxMediaScreen(navController: NavController) {
     var currentlyPlayingIndex by remember { mutableStateOf<Int?>(null) }
@@ -38,6 +51,7 @@ fun RelaxMediaScreen(navController: NavController) {
     // Зберігаємо стан улюблених
     var favoriteAudios by remember { mutableStateOf(setOf<Int>()) }
     var favoriteVideos by remember { mutableStateOf(setOf<Int>()) }
+    var favoriteImages by remember { mutableStateOf(setOf<Int>()) }
 
     Column(
         modifier = Modifier
@@ -80,39 +94,42 @@ fun RelaxMediaScreen(navController: NavController) {
             }
         }
 
-        // Перемикач між аудіо та відео
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp),
-            horizontalArrangement = Arrangement.Center
+        // Перемикач між типами медіа
+        TabRow(
+            selectedTabIndex = selectedMediaType.ordinal,
+            modifier = Modifier.fillMaxWidth()
         ) {
-            TabRow(
-                selectedTabIndex = selectedMediaType.ordinal,
-                modifier = Modifier.width(300.dp)
-            ) {
-                Tab(
-                    selected = selectedMediaType == MediaType.AUDIO,
-                    onClick = { selectedMediaType = MediaType.AUDIO },
-                    text = { Text("Аудіо") },
-                    icon = { Icon(Icons.Default.AudioFile, contentDescription = null) }
-                )
-                Tab(
-                    selected = selectedMediaType == MediaType.VIDEO,
-                    onClick = { selectedMediaType = MediaType.VIDEO },
-                    text = { Text("Відео") },
-                    icon = { Icon(Icons.Default.VideoLibrary, contentDescription = null) }
-                )
-            }
+            Tab(
+                selected = selectedMediaType == MediaType.AUDIO,
+                onClick = { selectedMediaType = MediaType.AUDIO },
+                text = { Text("Аудіо") },
+                icon = { Icon(Icons.Default.AudioFile, contentDescription = null) }
+            )
+            Tab(
+                selected = selectedMediaType == MediaType.VIDEO,
+                onClick = { selectedMediaType = MediaType.VIDEO },
+                text = { Text("Відео") },
+                icon = { Icon(Icons.Default.VideoLibrary, contentDescription = null) }
+            )
+            Tab(
+                selected = selectedMediaType == MediaType.IMAGES,
+                onClick = { selectedMediaType = MediaType.IMAGES },
+                text = { Text("Меми") },
+                icon = { Icon(Icons.Default.Image, contentDescription = null) }
+            )
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
         // Заголовок
-                            Text(
+        Text(
             text = when {
                 selectedMediaType == MediaType.AUDIO && showOnlyFavorites -> "Улюблені аудіо"
                 selectedMediaType == MediaType.AUDIO -> "Релаксаційні аудіо"
                 selectedMediaType == MediaType.VIDEO && showOnlyFavorites -> "Улюблені відео"
-                else -> "Релаксаційні відео"
+                selectedMediaType == MediaType.VIDEO -> "Релаксаційні відео"
+                selectedMediaType == MediaType.IMAGES && showOnlyFavorites -> "Улюблені меми"
+                else -> "Меми дня"
             },
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 16.dp)
@@ -217,6 +234,30 @@ fun RelaxMediaScreen(navController: NavController) {
                     )
                 }
             }
+            MediaType.IMAGES -> {
+                // Фільтруємо меми
+                val displayedImages = if (showOnlyFavorites) {
+                    relaxImages.filter { it.id in favoriteImages }
+                } else {
+                    relaxImages
+                }
+
+                if (displayedImages.isEmpty() && showOnlyFavorites) {
+                    EmptyFavoritesMessage()
+                } else {
+                    ImageGrid(
+                        images = displayedImages,
+                        favoriteImages = favoriteImages,
+                        onFavoriteClick = { imageId ->
+                            favoriteImages = if (imageId in favoriteImages) {
+                                favoriteImages - imageId
+                            } else {
+                                favoriteImages + imageId
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 
@@ -240,7 +281,7 @@ private fun EmptyFavoritesMessage() {
             .padding(16.dp),
         contentAlignment = Alignment.Center
     ) {
-                Text(
+        Text(
             text = "У вас ще немає улюблених медіа.\nДодайте їх, натиснувши на сердечко.",
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyLarge
@@ -311,45 +352,25 @@ private fun VideoPlayer(
     video: RelaxVideo,
     onDismiss: () -> Unit
 ) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {},
-        dismissButton = {
-            IconButton(
-                onClick = onDismiss
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Close,
-                    contentDescription = "Закрити",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
+    val context = LocalContext.current
+
+    AndroidView(
+        factory = { ctx ->
+            VideoView(ctx).apply {
+                setVideoURI(Uri.parse("android.resource://${context.packageName}/${video.resourceId}"))
+                setOnPreparedListener { mp ->
+                    mp.isLooping = true
+                    start()
+                }
+                setOnErrorListener { mp, what, extra ->
+                    Toast.makeText(context, "Помилка відтворення відео", Toast.LENGTH_SHORT).show()
+                    true
+                }
             }
-            },
-            text = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(16f/9f)
-            ) {
-                val context = LocalContext.current
-                AndroidView(
-                    factory = { ctx ->
-                        VideoView(ctx).apply {
-                            setVideoURI(Uri.parse("android.resource://${context.packageName}/${video.resourceId}"))
-                            setOnPreparedListener { mp ->
-                                mp.isLooping = true
-                                start()
-                            }
-                            setOnErrorListener { mp, what, extra ->
-                                Toast.makeText(context, "Помилка відтворення відео", Toast.LENGTH_SHORT).show()
-                                true
-                            }
-                        }
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
+        },
+        modifier = Modifier
+            .fillMaxWidth()
+            .aspectRatio(16f / 9f)
     )
 }
 
@@ -543,3 +564,96 @@ private val relaxAudios = listOf(
         resourceId = R.raw.meditation
     )
 )
+
+data class RelaxImage(
+    val id: Int,
+    val title: String,
+    val resourceId: Int
+)
+
+// Список мемів
+private val relaxImages = listOf(
+    RelaxImage(
+        id = 0,
+        title = "Мем дня",
+        resourceId = R.drawable.meme_of_day
+    )
+)
+
+@Composable
+private fun ImageGrid(
+    images: List<RelaxImage>,
+    favoriteImages: Set<Int>,
+    onFavoriteClick: (Int) -> Unit
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        items(images) { image ->
+            ImageCard(
+                image = image,
+                isFavorite = image.id in favoriteImages,
+                onFavoriteClick = { onFavoriteClick(image.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ImageCard(
+    image: RelaxImage,
+    isFavorite: Boolean,
+    onFavoriteClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val imageResource = painterResource(id = image.resourceId)
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = imageResource,
+                contentDescription = image.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f),
+                contentScale = ContentScale.Crop
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = image.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                
+                IconButton(
+                    onClick = onFavoriteClick
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = if (isFavorite) "Видалити з улюблених" else "Додати до улюблених",
+                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSecondaryContainer
+                    )
+                }
+            }
+        }
+    }
+}
